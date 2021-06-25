@@ -14,12 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="16.10.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Orangebeard.Client">
-      <HintPath>..\..\dotnet-client\src\Orangebeard.Client\bin\Debug\net45\Orangebeard.Client.dll</HintPath>
-    </Reference>
+    <PackageReference Include="Orangebeard.Client" Version="1.1.0.10" />
   </ItemGroup>
 
   <ItemGroup>
