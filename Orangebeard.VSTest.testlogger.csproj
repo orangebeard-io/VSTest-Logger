@@ -3,6 +3,13 @@
   <PropertyGroup>
     <TargetFramework>net45</TargetFramework>
     <RootNamespace>Orangebeard.VSTest.TestLogger</RootNamespace>
+    <Authors>Team Soju</Authors>
+    <Company>Orangebeard.io</Company>
+    <Description>Logs vstest output to Orangebeard</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageIcon>beard.png</PackageIcon>
+    <PackageTags>orangebeard vstest logger unittest</PackageTags>
+    <Version>1.0.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +20,13 @@
     <Reference Include="Orangebeard.Client">
       <HintPath>..\..\dotnet-client\src\Orangebeard.Client\bin\Debug\net45\Orangebeard.Client.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="beard.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
