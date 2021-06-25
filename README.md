@@ -5,7 +5,7 @@
   <br>Orangebeard.io VsTest Logger<br>
 </h1>
 
-<h4 align="center">A Report Logger to report Ranorex tests in Orangebeard.</h4>
+<h4 align="center">A Report Logger to report vstest/dotnet test tests in Orangebeard.</h4>
 
 <p align="center">
   <a href="https://github.com/orangebeard-io/VSTest-Logger/blob/master/LICENSE.txt">
@@ -50,7 +50,7 @@
       </LoggerRunSettings>
     </RunSettings>
 ```
-
+Place the following json as `Orangebeard.config.json` in your project and set it to copy to output (if newer). Replace values for your situation.
 ```json
     {
   "enabled": true,
