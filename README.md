@@ -1,15 +1,15 @@
 <h1 align="center">
-  <a href="https://github.com/orangebeard-io/Ranorex-Logger">
-    <img src="https://raw.githubusercontent.com/orangebeard-io/Ranorex-Logger/master/.github/logo.svg" alt="Orangebeard.io FitNesse TestSystemListener" height="200">
+  <a href="https://github.com/orangebeard-io/VSTest-Logger">
+    <img src="https://raw.githubusercontent.com/orangebeard-io/VSTest-Logger/master/.github/logo.svg" alt="Orangebeard.io FitNesse TestSystemListener" height="200">
   </a>
-  <br>Orangebeard.io Ranorex Report Logger<br>
+  <br>Orangebeard.io VsTest Logger<br>
 </h1>
 
 <h4 align="center">A Report Logger to report Ranorex tests in Orangebeard.</h4>
 
 <p align="center">
-  <a href="https://github.com/orangebeard-io/Ranorex-Logger/blob/master/LICENSE.txt">
-    <img src="https://img.shields.io/github/license/orangebeard-io/Ranorex-Logger?style=flat-square"
+  <a href="https://github.com/orangebeard-io/VSTest-Logger/blob/master/LICENSE.txt">
+    <img src="https://img.shields.io/github/license/orangebeard-io/VSTest-Logger?style=flat-square"
       alt="License" />
   </a>
 </p>
@@ -25,23 +25,50 @@
 ## Build
  * Clone this repository
  * Open in a .Net IDE
- * Reference the Orangebeard.Client DLL
- * Build the Ranorex Logger DLL
+ * Reference the Orangebeard.Client DLL (Find it on NuGet)
+ * Build the Logger DLL
 
 ## Install
 
- * Add your dll as a reference in your Ranorex Solution
- * Reference it in Program.cs `using RanorexOrangebeardListener;`
- * Attach the logger to your Ranorex report (environment vars can of course be set up elsewhere):
-```cs
-    Environment.SetEnvironmentVariable("orangebeard.endpoint", "https://your-instance.orangebeard.app");
-    Environment.SetEnvironmentVariable("orangebeard.accessToken", "api-token-for-orangebeard");
-    Environment.SetEnvironmentVariable("orangebeard.project", "projectname");
-    Environment.SetEnvironmentVariable("orangebeard.testrun", "Test Run name");
-    Environment.SetEnvironmentVariable("orangebeard.fileupload.patterns", @".*\.txt;.*\.bat"); //OPTIONAL
+ * Reference the Logger in tyour Solution, make sure it is copied to your output directory
+ * Run using vstest.console using /Logger Orangebeard, or via dotnet test -l Orangebeard
+ * To run from inside VS, use a runsettings file:
+```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <RunSettings>
+      <RunConfiguration>
+        <TestAdaptersPaths>.</TestAdaptersPaths>
+      </RunConfiguration>
+      <LoggerRunSettings>
+        <Loggers>
+          <Logger friendlyName="Orangebeard">
+            <Configuration>
+              <TestSet.Description>Unit Test Run From VS</TestSet.Description>
+            </Configuration>
+          </Logger>
+        </Loggers>
+      </LoggerRunSettings>
+    </RunSettings>
+```
 
-    OrangebeardLogger orangebeard = new OrangebeardLogger();
-    Report.AttachLogger(orangebeard);
+```json
+    {
+  "enabled": true,
+  "server": {
+    "url": "https://my.orangebeard.app/",
+    "project": "MY_PROJECT_NAME",
+    "authentication": {
+      "accessToken": "MY_AUTH_TOKEN"
+    }
+  },
+  "testSet": {
+    "name": "Test run name",
+    "description": "test run description",
+    "attributes": [ "tag1", "somekey:somevalue" ]
+  },
+  "rootNamespaces": [ "OptionalRootNameSpace" ]
+}
+
 ```
 
 Now run your test as you normally do and see the results fly in to Orangebeard!
