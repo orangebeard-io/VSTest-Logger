@@ -50,7 +50,7 @@
       </LoggerRunSettings>
     </RunSettings>
 ```
-
+Place the following json as `Orangebeard.config.json` in your project and set it to copy to output (if newer). Replace values for your situation.
 ```json
     {
   "enabled": true,
