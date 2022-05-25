@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net45</TargetFramework>
@@ -14,7 +14,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="16.10.0" />
-    <PackageReference Include="Orangebeard.Client" Version="1.1.0.10" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +21,12 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Orangebeard.Client">
+      <HintPath>..\..\..\..\..\DEVELOPMENT\Orangebeard\RanorexListener\dotnet-client\src\Orangebeard.Client\bin\Debug\net45\Orangebeard.Client.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
