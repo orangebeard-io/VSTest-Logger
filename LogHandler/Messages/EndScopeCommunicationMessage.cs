@@ -1,6 +1,7 @@
-﻿using Orangebeard.Shared.Execution.Logging;
+﻿//using Orangebeard.Shared.Execution.Logging;
 using System;
 using System.Runtime.Serialization;
+using static Orangebeard.VSTest.TestLogger.OrangebeardLogger;
 
 namespace Orangebeard.VSTest.TestLogger.LogHandler.Messages
 {

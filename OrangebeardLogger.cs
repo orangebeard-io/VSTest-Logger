@@ -152,9 +152,9 @@ namespace Orangebeard.VSTest.TestLogger
 
                         AddLogMessages(e.Result, testItemUuid.Value);
 
-                        AddAttachments(e, testItemUuid);
+                        AddAttachments(e, testItemUuid.Value);
 
-                        FinishTest(e, testItemUuid);
+                        FinishTest(e, testItemUuid.Value);
                     }
                 }
                 catch (Exception ex)
@@ -394,7 +394,7 @@ namespace Orangebeard.VSTest.TestLogger
             }
         }
 
-        private void AddAttachments(TestResultEventArgs e, Guid testReporter)
+        private void AddAttachments(TestResultEventArgs e, Guid? testUuid)
         {
             // add attachments
             if (e.Result.Attachments != null)
@@ -407,40 +407,19 @@ namespace Orangebeard.VSTest.TestLogger
 
                         try
                         {
-                            var attachmentLogRequest = new CreateLogItemRequest
-                            {
-                                Level = LogLevel.Info,
-                                Text = Path.GetFileName(filePath),
-                                Time = e.Result.EndTime.UtcDateTime
-                            };
-
-                            var fileExtension = Path.GetExtension(filePath);
-
-                            byte[] bytes;
-
-                            using (var fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read))
-                            {
-                                using (var memoryStream = new MemoryStream())
-                                {
-                                    fileStream.CopyTo(memoryStream);
-                                    bytes = memoryStream.ToArray();
-                                }
-                            }
-
-                            attachmentLogRequest.Attach = new LogItemAttach(MimeTypeMap.GetMimeType(fileExtension), bytes);
-
-                            testReporter.Log(attachmentLogRequest);
+                            FileInfo fileInfo = new FileInfo(filePath);
+                            Attachment.AttachmentFile attachmentFile = new Attachment.AttachmentFile(fileInfo);
+                            //TODO?~ In the original code, end time is set to e.Result.EndTime.UtcDateTime.
+                            Attachment attachment = new Attachment(_testRunUuid.Value, testUuid.Value, LogLevel.info, fileInfo.Name, attachmentFile);
+                            _orangebeard.SendAttachment(attachment);
                         }
                         catch (Exception exp)
                         {
                             var error = $"Cannot read a content of '{filePath}' file: {exp.Message}";
 
-                            testReporter.Log(new CreateLogItemRequest
-                            {
-                                Level = LogLevel.Warning,
-                                Time = e.Result.EndTime.UtcDateTime,
-                                Text = error
-                            });
+                            //TODO?~ In the original code, end time is set to e.Result.EndTime.UtcDateTime.
+                            Log log = new Log(_testRunUuid.Value, testUuid.Value, LogLevel.warn, error);
+                            _orangebeard.Log(log);
 
                             TraceLogger.Error(error);
                         }
@@ -449,48 +428,38 @@ namespace Orangebeard.VSTest.TestLogger
             }
         }
 
-        private static void FinishTest(TestResultEventArgs e, ITestReporter testReporter)
+        private void FinishTest(TestResultEventArgs e, Guid testUuid)
         {
             // finish test
 
+            //TODO?~ Original time was an adjusted version of e.Result.StartTime:
             // adjust end time, fixes https://github.com/reportportal/agent-net-vstest/issues/49
-            var endTime = e.Result.StartTime.UtcDateTime.Add(e.Result.Duration);
-
-            var finishTestRequest = new FinishTestItemRequest
-            {
-                EndTime = endTime,
-                Status = _statusMapping[e.Result.Outcome]
-            };
-
-            testReporter.Finish(finishTestRequest);
+            //var endTime = e.Result.StartTime.UtcDateTime.Add(e.Result.Duration);
+            var finishTestItem = new FinishTestItem(_testRunUuid.Value, _statusMapping[e.Result.Outcome]);
+            _orangebeard.FinishTestItem(testUuid, finishTestItem);
         }
 
         private Dictionary<string, Guid> _nestedSteps = new Dictionary<string, Guid>();
 
-        private bool HandleAddLogCommunicationAction(ITestReporter testReporter, AddLogCommunicationMessage message)
+        private bool HandleAddLogCommunicationAction(Guid? testUuid, AddLogCommunicationMessage message)
         {
-            var logRequest = new CreateLogItemRequest
+            if (message.ParentScopeId != null)
             {
-                Level = message.Level,
-                Time = message.Time,
-                Text = message.Text
-            };
+                testUuid = _nestedSteps[message.ParentScopeId];
+            }
 
             if (message.Attach != null)
             {
-                logRequest.Attach = new LogItemAttach
-                {
-                    MimeType = message.Attach.MimeType,
-                    Data = message.Attach.Data
-                };
+                string filename = "dummy"; //TODO!~ Find a PROPER filename!
+                Attachment.AttachmentFile attachmentFile = new Attachment.AttachmentFile(filename, message.Attach.MimeType, message.Attach.Data);
+                Attachment attachment = new Attachment(_testRunUuid.Value, testUuid.Value, message.Level, filename, attachmentFile);
+                _orangebeard.SendAttachment(attachment);
             }
-
-            if (message.ParentScopeId != null)
+            else
             {
-                testReporter = _nestedSteps[message.ParentScopeId];
+                var log = new Log(_testRunUuid.Value, testUuid.Value, message.Level, message.Text);
+                _orangebeard.Log(log);
             }
-
-            testReporter.Log(logRequest);
 
             return true;
         }
@@ -498,7 +467,6 @@ namespace Orangebeard.VSTest.TestLogger
         private bool HandleBeginLogScopeCommunicationAction(Guid testReporter, BeginScopeCommunicationMessage message)
         {
             //TODO?~ In the original code, start time was set to message.BeginTime.
-            //TODO?+ In the original code, it also sets HasStats to false.
             var startTestItem = new StartTestItem(_testRunUuid.Value, message.Name, TestItemType.STEP, null, null);
 
             if (message.ParentScopeId != null)
@@ -541,7 +509,7 @@ namespace Orangebeard.VSTest.TestLogger
             var nestedStep = _nestedSteps[message.Id];
 
             //TODO?~ In the original code, the end time of the FinishTestItemRequest was set to message.EndTime.
-            var finishTestItem = new FinishTestItem(_testRunUuid.Value, _nestedSteps[message.Status]);
+            var finishTestItem = new FinishTestItem(_testRunUuid.Value, _nestedStepStatusMap[message.Status]);
             _orangebeard.FinishTestItem(nestedStep, finishTestItem);
 
             _nestedSteps.Remove(message.Id);
