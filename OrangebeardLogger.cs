@@ -144,11 +144,9 @@ namespace Orangebeard.VSTest.TestLogger
 
                         var testAttributesEnumerable = (testCategories.Select(category => new Attribute(value: category)));
                         var testAttributes = new HashSet<Attribute>(testAttributesEnumerable);
-                        //TODO?~ The original code set the StartTestItem's start time to the value of `e.Result.StartTime.UtcDateTime`.
                         var startTest = new StartTestItem(_testRunUuid.Value, testName, TestItemType.TEST, testDescription, testAttributes);
 
                         var testItemUuid = _orangebeard.StartTestItem(suiteReporter, startTest);
-                        //TODO?+ Handle the situation that testItemUuid == null ?
 
                         AddLogMessages(e.Result, testItemUuid.Value);
 
@@ -242,48 +240,47 @@ namespace Orangebeard.VSTest.TestLogger
 
         private Guid GetOrStartSuiteNode(string fullName, DateTime startTime)
         {
-            if (_suites.ContainsKey(fullName))
+            try
             {
-                return _suites[fullName];
-            }
-            else
-            {
-                var parts = fullName.Split('.');
-
-                if (parts.Length == 1)
+                if (_suites.ContainsKey(fullName))
                 {
-                    if (_suites.ContainsKey(parts[0]))
-                    {
-                        return _suites[parts[0]];
-                    }
-                    else
-                    {
-                        // create root
-                        //TODO?~ The original code set the StartTestItem's start time to the `startTime` thas has been passed to us as a parameter.
-                        var startSuite = new StartTestItem(_testRunUuid.Value, fullName, TestItemType.SUITE, null, null);
-
-                        //TODO?~ Handle the case that rootSuite == null ?
-                        var rootSuite = _orangebeard.StartTestItem(null, startSuite);
-
-                        _suites[fullName] = rootSuite.Value;
-                        return rootSuite.Value;
-                    }
+                    return _suites[fullName];
                 }
                 else
                 {
-                    var parent = GetOrStartSuiteNode(string.Join(".", parts.Take(parts.Length - 1)), startTime);
+                    var parts = fullName.Split('.');
 
-                    // create suite
-                    //TODO?~ The original code set the StartTestItem's start time to the `startTime` thas has been passed to us as a parameter.
-                    var startSuite = new StartTestItem(_testRunUuid.Value, parts.Last(), TestItemType.SUITE, null, null);
+                    if (parts.Length == 1)
+                    {
+                        if (_suites.ContainsKey(parts[0]))
+                        {
+                            return _suites[parts[0]];
+                        }
+                        else
+                        {
+                            // create root
+                            var startSuite = new StartTestItem(_testRunUuid.Value, fullName, TestItemType.SUITE, null, null);
+                            var rootSuite = _orangebeard.StartTestItem(null, startSuite);
+                            _suites[fullName] = rootSuite.Value;
+                            return rootSuite.Value;
+                        }
+                    }
+                    else
+                    {
+                        var parent = GetOrStartSuiteNode(string.Join(".", parts.Take(parts.Length - 1)), startTime);
 
-                    //TODO?~ Handle the case that suite == null ?
-                    var suite = _orangebeard.StartTestItem(parent, startSuite);
-
-                    _suites[fullName] = suite.Value;
-
-                    return suite.Value;
+                        // create suite
+                        var startSuite = new StartTestItem(_testRunUuid.Value, parts.Last(), TestItemType.SUITE, null, null);
+                        var suite = _orangebeard.StartTestItem(parent, startSuite);
+                        _suites[fullName] = suite.Value;
+                        return suite.Value;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                HandleLoggerException(nameof(GetOrStartSuiteNode), ex);
+                throw;
             }
         }
 
@@ -378,7 +375,7 @@ namespace Orangebeard.VSTest.TestLogger
                         {
                             // consider line output as usual user's log message
 
-                            Log log = new Log(_testRunUuid.Value, testUuid, LogLevel.info, line);
+                            Log log = new Log(_testRunUuid.Value, testUuid, LogLevel.info, line, LogFormat.PLAIN_TEXT);
                             _orangebeard.Log(log);
                         }
                     }
@@ -388,8 +385,7 @@ namespace Orangebeard.VSTest.TestLogger
             if (testResult.ErrorMessage != null)
             {
                 string message = testResult.ErrorMessage + "\n" + testResult.ErrorStackTrace;
-                //TODO?~ In the original code, the time of the log was set to testResult.EndTime.UtcDateTime.
-                Log log = new Log(_testRunUuid.Value, testUuid, LogLevel.error, message);
+                Log log = new Log(_testRunUuid.Value, testUuid, LogLevel.error, message, LogFormat.PLAIN_TEXT);
                 _orangebeard.Log(log);
             }
         }
@@ -409,7 +405,6 @@ namespace Orangebeard.VSTest.TestLogger
                         {
                             FileInfo fileInfo = new FileInfo(filePath);
                             Attachment.AttachmentFile attachmentFile = new Attachment.AttachmentFile(fileInfo);
-                            //TODO?~ In the original code, end time is set to e.Result.EndTime.UtcDateTime.
                             Attachment attachment = new Attachment(_testRunUuid.Value, testUuid.Value, LogLevel.info, fileInfo.Name, attachmentFile);
                             _orangebeard.SendAttachment(attachment);
                         }
@@ -417,8 +412,7 @@ namespace Orangebeard.VSTest.TestLogger
                         {
                             var error = $"Cannot read a content of '{filePath}' file: {exp.Message}";
 
-                            //TODO?~ In the original code, end time is set to e.Result.EndTime.UtcDateTime.
-                            Log log = new Log(_testRunUuid.Value, testUuid.Value, LogLevel.warn, error);
+                            Log log = new Log(_testRunUuid.Value, testUuid.Value, LogLevel.warn, error, LogFormat.PLAIN_TEXT);
                             _orangebeard.Log(log);
 
                             TraceLogger.Error(error);
@@ -431,10 +425,6 @@ namespace Orangebeard.VSTest.TestLogger
         private void FinishTest(TestResultEventArgs e, Guid testUuid)
         {
             // finish test
-
-            //TODO?~ Original time was an adjusted version of e.Result.StartTime:
-            // adjust end time, fixes https://github.com/reportportal/agent-net-vstest/issues/49
-            //var endTime = e.Result.StartTime.UtcDateTime.Add(e.Result.Duration);
             var finishTestItem = new FinishTestItem(_testRunUuid.Value, _statusMapping[e.Result.Outcome]);
             _orangebeard.FinishTestItem(testUuid, finishTestItem);
         }
@@ -457,7 +447,7 @@ namespace Orangebeard.VSTest.TestLogger
             }
             else
             {
-                var log = new Log(_testRunUuid.Value, testUuid.Value, message.Level, message.Text);
+                var log = new Log(_testRunUuid.Value, testUuid.Value, message.Level, message.Text, LogFormat.PLAIN_TEXT);
                 _orangebeard.Log(log);
             }
 
@@ -466,7 +456,6 @@ namespace Orangebeard.VSTest.TestLogger
 
         private bool HandleBeginLogScopeCommunicationAction(Guid testReporter, BeginScopeCommunicationMessage message)
         {
-            //TODO?~ In the original code, start time was set to message.BeginTime.
             var startTestItem = new StartTestItem(_testRunUuid.Value, message.Name, TestItemType.STEP, null, null);
 
             if (message.ParentScopeId != null)
@@ -476,15 +465,12 @@ namespace Orangebeard.VSTest.TestLogger
 
             var nestedStep = _orangebeard.StartTestItem(testReporter, startTestItem);
 
-            //TODO?~ Handle the case that nestedStep == null?
             _nestedSteps[message.Id] = nestedStep.Value;
 
             return true;
         }
 
 
-        //TODO?~ Is this stuff still needed...?
-        // Copied from Orangebeard.Client/Execution/Logging/LogScopeStatus.cs:
         /// <summary>
         /// Status of logging scope.
         /// </summary>
@@ -495,7 +481,6 @@ namespace Orangebeard.VSTest.TestLogger
             Failed,
             Skipped
         }
-        //End of copy
 
         private readonly Dictionary<LogScopeStatus, Status> _nestedStepStatusMap = new Dictionary<LogScopeStatus, Status> {
             { LogScopeStatus.InProgress, Status.IN_PROGRESS },
@@ -508,7 +493,6 @@ namespace Orangebeard.VSTest.TestLogger
         {
             var nestedStep = _nestedSteps[message.Id];
 
-            //TODO?~ In the original code, the end time of the FinishTestItemRequest was set to message.EndTime.
             var finishTestItem = new FinishTestItem(_testRunUuid.Value, _nestedStepStatusMap[message.Status]);
             _orangebeard.FinishTestItem(nestedStep, finishTestItem);
 
@@ -517,7 +501,7 @@ namespace Orangebeard.VSTest.TestLogger
             return true;
         }    
 
-    private void HandleLoggerException(string caller, Exception e)
+        private void HandleLoggerException(string caller, Exception e)
         {
             var msg = $"Exception in {caller}: {e}";
             TraceLogger.Error(msg);
