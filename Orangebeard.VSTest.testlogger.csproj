@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net45</TargetFramework>
@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="16.10.0" />
-    <PackageReference Include="Orangebeard.Client" Version="1.1.0.10" />
+    <PackageReference Include="Orangebeard.Client" Version="2.0.0.4" />
   </ItemGroup>
 
   <ItemGroup>

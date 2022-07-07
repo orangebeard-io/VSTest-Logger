@@ -3,3 +3,4 @@ obj/
 Properties/launchSettings.json
 .vs/
 libs/
+*.csproj.user
