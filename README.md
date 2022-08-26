@@ -1,14 +1,14 @@
 <h1 align="center">
   <a href="https://github.com/orangebeard-io/VSTest-Logger">
-    <img src="https://raw.githubusercontent.com/orangebeard-io/VSTest-Logger/main/.github/logo.svg" alt="Orangebeard.io FitNesse TestSystemListener" height="200">
+    <img src="https://raw.githubusercontent.com/orangebeard-io/VSTest-Logger/master/.github/logo.svg" alt="Orangebeard.io FitNesse TestSystemListener" height="200">
   </a>
   <br>Orangebeard.io VsTest Logger<br>
 </h1>
 
-<h4 align="center">A Report Logger to report VSTest output in Orangebeard.</h4>
+<h4 align="center">A Report Logger to report Ranorex tests in Orangebeard.</h4>
 
 <p align="center">
-  <a href="https://github.com/orangebeard-io/VSTest-Logger/blob/main/LICENSE.txt">
+  <a href="https://github.com/orangebeard-io/VSTest-Logger/blob/master/LICENSE.txt">
     <img src="https://img.shields.io/github/license/orangebeard-io/VSTest-Logger?style=flat-square"
       alt="License" />
   </a>
@@ -30,7 +30,7 @@
 
 ## Install
 
- * Reference the Logger in tyour Solution, make sure it is copied to your output directory (Find the listener on Nuget!)
+ * Reference the Logger in tyour Solution, make sure it is copied to your output directory
  * Run using vstest.console using /Logger Orangebeard, or via dotnet test -l Orangebeard
  * To run from inside VS, use a runsettings file:
 ```xml
@@ -50,7 +50,7 @@
       </LoggerRunSettings>
     </RunSettings>
 ```
-Place the following json as `Orangebeard.config.json` in your project and set it to copy to output (if newer). Replace values for your situation.
+
 ```json
     {
   "enabled": true,

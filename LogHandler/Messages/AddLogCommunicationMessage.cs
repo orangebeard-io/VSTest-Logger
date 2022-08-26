@@ -1,5 +1,4 @@
 ﻿using Orangebeard.Client.Abstractions.Models;
-using Orangebeard.Client.Entities;
 using System;
 using System.Runtime.Serialization;
 
@@ -23,7 +22,7 @@ namespace Orangebeard.VSTest.TestLogger.LogHandler.Messages
         /// A level of log item.
         /// </summary>
         [DataMember]
-        public LogLevel Level = LogLevel.info;
+        public LogLevel Level = LogLevel.Info;
 
         /// <summary>
         /// Message of log item.
