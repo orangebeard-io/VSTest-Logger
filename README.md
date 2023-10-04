@@ -5,7 +5,7 @@
   <br>Orangebeard.io VsTest Logger<br>
 </h1>
 
-<h4 align="center">A Report Logger to report Ranorex tests in Orangebeard.</h4>
+<h4 align="center">A Report Logger to report VStest tests in Orangebeard.</h4>
 
 <p align="center">
   <a href="https://github.com/orangebeard-io/VSTest-Logger/blob/master/LICENSE.txt">
