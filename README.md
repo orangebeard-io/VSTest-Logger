@@ -28,9 +28,11 @@
  * Reference the Orangebeard.Client DLL (Find it on NuGet)
  * Build the Logger DLL
 
-## Install
+## Install & use
 
- * Reference the Logger in tyour Solution, make sure it is copied to your output directory
+ * Get the logger from NuGet, or build it yourself
+ * Reference the Logger in your Solution, make sure it is copied to your output directory
+ * Configure the logger using json or environment variables
  * Run using vstest.console using /Logger Orangebeard, or via dotnet test -l Orangebeard
  * To run from inside VS, use a runsettings file:
 ```xml
@@ -51,23 +53,24 @@
     </RunSettings>
 ```
 
+Configuration: orangebeard.json
+
 ```json
+{
+  "endpoint": "https://app.orangebeard.io/my-org",
+  "accessToken": "listener-access-token",
+  "project": "projectname",
+  "testset": "My Test Suite",
+  "description": "A description",
+  "attributes": [
     {
-  "enabled": true,
-  "server": {
-    "url": "https://my.orangebeard.app/",
-    "project": "MY_PROJECT_NAME",
-    "authentication": {
-      "accessToken": "MY_AUTH_TOKEN"
+      "key": "Tool",
+      "value": "VS"
     }
-  },
-  "testSet": {
-    "name": "Test run name",
-    "description": "test run description",
-    "attributes": [ "tag1", "somekey:somevalue" ]
-  },
-  "rootNamespaces": [ "OptionalRootNameSpace" ]
+  ],
+  "reference_url": "https://docs.orangebeard.io/"
 }
+
 
 ```
 
