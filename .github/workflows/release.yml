@@ -33,11 +33,11 @@ jobs:
         run: msbuild Orangebeard.VSTest.testlogger.csproj /p:Configuration=Release /p:NoWarn=1591
 
       - name: Archive Release
-          uses: thedoctor0/zip-release@0.7.5
-          with:
-            type: 'zip'
-            directory: bin\Release
-            filename: '..\..\release_artifacts.zip'
+        uses: thedoctor0/zip-release@0.7.5
+        with:
+          type: 'zip'
+          directory: bin\Release
+          filename: '..\..\release_artifacts.zip'
 
       - name: Create Release
         id: create_release
