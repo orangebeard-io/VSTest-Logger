@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using NuGet.Frameworks;
 using Orangebeard.Client.V3;
 using Orangebeard.Client.V3.Entity;
 using Orangebeard.Client.V3.Entity.Attachment;
@@ -16,6 +18,7 @@ using Orangebeard.Client.V3.Entity.Test;
 using Orangebeard.Client.V3.Entity.TestRun;
 using Orangebeard.Client.V3.MimeTypes;
 using Orangebeard.Client.V3.OrangebeardConfig;
+using Attribute = Orangebeard.Client.V3.Entity.Attribute;
 
 namespace Orangebeard.VSTest.TestLogger
 {
@@ -50,6 +53,9 @@ namespace Orangebeard.VSTest.TestLogger
                     .WithListenerIdentification(
                         "VSTest Logger/" + listenerVersion
                     );
+
+                _config.Attributes.Add(new Attribute("Runtime",
+                    System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription));
                 _orangebeard = new OrangebeardAsyncV3Client(_config);
 
                 events.TestRunStart += HandleTestRunStart;
@@ -78,6 +84,13 @@ namespace Orangebeard.VSTest.TestLogger
 
         private void HandleTestRunStart(object sender, TestRunStartEventArgs e)
         {
+            var sources = e.TestRunCriteria?.Sources ?? Array.Empty<string>();
+            var s = sources.First();
+            var tfm = TryGetShortTfmFromAssembly(s)
+                      ?? GuessTfmFromPath(s)
+                      ?? "(unknown)";
+            _config.Attributes.Add(new Attribute("Target", tfm));
+
             _orangebeard.StartTestRun(
                 new StartTestRun()
                 {
@@ -178,7 +191,7 @@ namespace Orangebeard.VSTest.TestLogger
                     Description = testDescription,
                     StartTime = e.Result.StartTime.UtcDateTime
                 });
-                
+
                 // add log messages
                 foreach (var message in e.Result.Messages.Select(message => message.Text))
                 {
@@ -292,11 +305,60 @@ namespace Orangebeard.VSTest.TestLogger
 
             _suites[fullName] = suite;
         }
-        
+
         private void HandleLoggerException(string caller, Exception e)
         {
             var msg = $"Exception in {caller}: {e}";
             Console.WriteLine(msg);
         }
+
+        private static string TryGetShortTfmFromAssembly(string assemblyPath)
+        {
+            try
+            {
+                // Prefer already-loaded assembly to avoid reloading
+                var loaded = AppDomain.CurrentDomain.GetAssemblies()
+                    .FirstOrDefault(a => HasLocation(a) && PathsEqual(a.Location, assemblyPath));
+                var asm = loaded ?? Assembly.LoadFrom(assemblyPath);
+
+                var moniker = asm.GetCustomAttribute<TargetFrameworkAttribute>()?.FrameworkName;
+                if (string.IsNullOrEmpty(moniker)) return null;
+
+                // ".NETCoreApp,Version=v8.0" -> "net8.0"
+                var fx = NuGetFramework.ParseFrameworkName(moniker, new DefaultFrameworkNameProvider());
+                return fx.GetShortFolderName();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static string GuessTfmFromPath(string assemblyPath)
+        {
+            // Fallback: …/bin/Debug/net8.0/YourTests.dll → "net8.0"
+            var segs = assemblyPath.Replace('\\', '/').Split('/');
+            var candidate = segs.Reverse().Skip(1).FirstOrDefault(); // directory above the DLL
+            return (!string.IsNullOrWhiteSpace(candidate) &&
+                    candidate.StartsWith("net", StringComparison.OrdinalIgnoreCase))
+                ? candidate
+                : null;
+        }
+
+        private static bool HasLocation(Assembly a)
+        {
+            try
+            {
+                _ = a.Location;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool PathsEqual(string a, string b) =>
+            string.Equals(Path.GetFullPath(a), Path.GetFullPath(b), StringComparison.OrdinalIgnoreCase);
     }
 }
